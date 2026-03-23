@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Job Email Sorter</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+<div class="app" id="app">
+
+  <!-- HEADER -->
+  <header class="header">
+    <div class="logo">
+      <span class="logo-icon">📧</span>
+      <span class="logo-text">Job Email Sorter</span>
+    </div>
+    <div class="header-actions">
+      <button class="icon-btn" id="settingsBtn" title="Settings">⚙️</button>
+      <button class="icon-btn" id="themeBtn"    title="Toggle dark mode">🌙</button>
+    </div>
+  </header>
+
+  <!-- SIGN-IN VIEW -->
+  <section id="authSection" class="view hidden">
+    <div class="auth-card">
+      <div class="auth-icon">📬</div>
+      <h2>Connect Your Gmail</h2>
+      <p>Sign in with Google to start automatically sorting your job application emails.</p>
+      <button class="btn btn-primary" id="signInBtn">Sign in with Google</button>
+    </div>
+  </section>
+
+  <!-- DASHBOARD VIEW -->
+  <section id="dashboard" class="view hidden">
+
+    <div class="stats-grid">
+      <div class="stat-card accepted">
+        <div class="stat-num" id="statAccepted">0</div>
+        <div class="stat-lbl">Accepted</div>
+      </div>
+      <div class="stat-card rejected">
+        <div class="stat-num" id="statRejected">0</div>
+        <div class="stat-lbl">Rejected</div>
+      </div>
+      <div class="stat-card interview">
+        <div class="stat-num" id="statInterviews">0</div>
+        <div class="stat-lbl">Interviews</div>
+      </div>
+      <div class="stat-card promo">
+        <div class="stat-num" id="statPromotions">0</div>
+        <div class="stat-lbl">Promos</div>
+      </div>
+    </div>
+
+    <div class="rate-row">
+      <span class="rate-lbl">Acceptance rate</span>
+      <span class="rate-val" id="acceptanceRate">—</span>
+    </div>
+    <div class="progress-track">
+      <div class="progress-fill" id="acceptanceBar" style="width:0%"></div>
+    </div>
+
+    <div class="actions-row">
+      <button class="btn btn-primary" id="scanNowBtn">🔍 Scan Now</button>
+      <button class="btn btn-secondary" id="openGmailBtn">📥 Gmail</button>
+    </div>
+
+    <div class="last-scan" id="lastScanInfo">Last scan: never</div>
+
+    <div class="activity-section">
+      <div class="section-title">Recent Activity</div>
+      <div id="activityList" class="activity-list">
+        <div class="empty-msg">No activity yet — try scanning now.</div>
+      </div>
+    </div>
+
+  </section>
+
+  <!-- SETTINGS PANEL -->
+  <section id="settingsPanel" class="view hidden">
+    <div class="panel-header">
+      <button class="back-btn" id="backBtn">← Back</button>
+      <h2>Settings</h2>
+    </div>
+
+    <div class="settings-list">
+
+      <label class="setting-row">
+        <div class="setting-info">
+          <div class="setting-name">Auto-label emails</div>
+          <div class="setting-hint">Apply Gmail labels automatically</div>
+        </div>
+        <div class="toggle-wrap">
+          <input type="checkbox" id="sAutoLabel" class="toggle-input">
+          <span class="toggle-track"><span class="toggle-thumb"></span></span>
+        </div>
+      </label>
+
+      <label class="setting-row">
+        <div class="setting-info">
+          <div class="setting-name">Star acceptances</div>
+          <div class="setting-hint">Automatically star offer emails</div>
+        </div>
+        <div class="toggle-wrap">
+          <input type="checkbox" id="sStarAccept" class="toggle-input">
+          <span class="toggle-track"><span class="toggle-thumb"></span></span>
+        </div>
+      </label>
+
+      <label class="setting-row">
+        <div class="setting-info">
+          <div class="setting-name">Auto-archive promotions</div>
+          <div class="setting-hint">Move promo emails out of inbox</div>
+        </div>
+        <div class="toggle-wrap">
+          <input type="checkbox" id="sAutoArchive" class="toggle-input">
+          <span class="toggle-track"><span class="toggle-thumb"></span></span>
+        </div>
+      </label>
+
+      <label class="setting-row">
+        <div class="setting-info">
+          <div class="setting-name">Notifications</div>
+          <div class="setting-hint">Alert on new acceptances</div>
+        </div>
+        <div class="toggle-wrap">
+          <input type="checkbox" id="sNotifications" class="toggle-input">
+          <span class="toggle-track"><span class="toggle-thumb"></span></span>
+        </div>
+      </label>
+
+      <label class="setting-row">
+        <div class="setting-info">
+          <div class="setting-name">Gmail badges</div>
+          <div class="setting-hint">Show classification tags in Gmail</div>
+        </div>
+        <div class="toggle-wrap">
+          <input type="checkbox" id="sShowBadges" class="toggle-input">
+          <span class="toggle-track"><span class="toggle-thumb"></span></span>
+        </div>
+      </label>
+
+      <div class="setting-row">
+        <div class="setting-info">
+          <div class="setting-name">Scan interval</div>
+          <div class="setting-hint">How often to check for new emails</div>
+        </div>
+        <select id="sScanInterval" class="select-ctrl">
+          <option value="5">5 min</option>
+          <option value="15">15 min</option>
+          <option value="30">30 min</option>
+          <option value="60">1 hour</option>
+        </select>
+      </div>
+
+    </div>
+
+    <div class="settings-footer">
+      <button class="btn btn-primary" id="saveSettingsBtn">Save</button>
+      <button class="btn btn-danger"  id="signOutBtn">Sign Out</button>
+    </div>
+
+    <div class="save-msg hidden" id="saveMsg">✅ Saved!</div>
+  </section>
+
+</div>
+<script src="popup.js" type="module"></script>
+</body>
+</html>

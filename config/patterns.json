@@ -1,0 +1,199 @@
+{
+  "job_acceptance": {
+    "high_confidence": [
+      "congratulations on your new position",
+      "pleased to offer you the position",
+      "offer letter attached",
+      "accepted for the role",
+      "we are pleased to extend an offer",
+      "excited to offer you",
+      "happy to offer you",
+      "formal offer of employment",
+      "employment offer",
+      "offer of employment",
+      "we would like to offer you",
+      "thrilled to offer"
+    ],
+    "medium_confidence": [
+      "we'd like to move forward",
+      "next steps in the process",
+      "please review the offer",
+      "welcome to the team",
+      "start date",
+      "onboarding",
+      "background check",
+      "references",
+      "compensation package",
+      "salary details",
+      "sign your offer"
+    ],
+    "context_words": ["interview", "position", "role", "offer", "employment", "join", "team"]
+  },
+  "job_rejection": {
+    "high_confidence": [
+      "decided to move forward with other candidates",
+      "will not be moving forward",
+      "not selected for this position",
+      "we have decided not to move forward",
+      "after careful consideration, we",
+      "we will not be moving forward with your application",
+      "regret to inform you",
+      "not be proceeding with your application",
+      "we have chosen not to",
+      "unfortunately we will not"
+    ],
+    "medium_confidence": [
+      "unfortunately",
+      "pursuing other candidates",
+      "keep your resume on file",
+      "we have filled the position",
+      "highly competitive applicant pool",
+      "other candidates whose experience",
+      "position has been filled",
+      "wish you the best",
+      "future opportunities",
+      "decision was difficult",
+      "explore other opportunities"
+    ],
+    "context_words": ["application", "position", "role", "candidacy", "opportunity"]
+  },
+  "interview_request": {
+    "high_confidence": [
+      "schedule an interview",
+      "phone screen",
+      "video interview",
+      "technical interview",
+      "on-site interview",
+      "interview invitation",
+      "would like to interview you",
+      "invite you for an interview",
+      "hiring manager would like to",
+      "recruiter would like to connect"
+    ],
+    "medium_confidence": [
+      "your availability",
+      "speak with you",
+      "connect with you",
+      "discuss your background",
+      "next steps",
+      "calendly",
+      "schedule a call",
+      "interview process",
+      "30 minute call",
+      "60 minute call",
+      "book a time"
+    ],
+    "context_words": ["interview", "schedule", "call", "meeting", "discuss", "recruiter"]
+  },
+  "application_confirmation": {
+    "high_confidence": [
+      "application received",
+      "thank you for applying",
+      "application has been submitted",
+      "we received your application",
+      "application confirmation",
+      "successfully applied",
+      "application was submitted",
+      "we have received your application"
+    ],
+    "medium_confidence": [
+      "thank you for your interest",
+      "will review your application",
+      "our team will review",
+      "keep you informed",
+      "reviewing applications",
+      "shortlist candidates",
+      "qualified candidates"
+    ],
+    "context_words": ["application", "position", "applied", "resume", "cv", "job"]
+  },
+  "promotional": {
+    "high_confidence": [
+      "unsubscribe",
+      "view in browser",
+      "email preferences",
+      "opt out",
+      "click here to unsubscribe",
+      "manage your email preferences",
+      "you are receiving this",
+      "update your preferences",
+      "remove yourself from"
+    ],
+    "medium_confidence": [
+      "limited time offer",
+      "exclusive deal",
+      "don't miss out",
+      "sale ends",
+      "% off",
+      "discount code",
+      "promo code",
+      "free shipping",
+      "subscribe now",
+      "special offer",
+      "act now",
+      "order now",
+      "shop now",
+      "best deals",
+      "flash sale"
+    ],
+    "spam_indicators": [
+      "make money fast",
+      "click here now",
+      "buy now",
+      "special promotion",
+      "you've been selected",
+      "congratulations you won"
+    ],
+    "context_words": ["offer", "deal", "sale", "discount", "save", "buy", "shop"]
+  },
+  "job_sender_domains": {
+    "ats_platforms": [
+      "greenhouse.io",
+      "lever.co",
+      "workday.com",
+      "taleo.net",
+      "icims.com",
+      "jobvite.com",
+      "smartrecruiters.com",
+      "bamboohr.com",
+      "workable.com",
+      "recruitee.com",
+      "ashbyhq.com",
+      "rippling.com",
+      "myworkdayjobs.com",
+      "ultipro.com",
+      "successfactors.com",
+      "kenexa.com"
+    ],
+    "job_boards": [
+      "linkedin.com",
+      "indeed.com",
+      "glassdoor.com",
+      "ziprecruiter.com",
+      "monster.com",
+      "dice.com",
+      "hired.com",
+      "wellfound.com",
+      "angellist.com",
+      "builtinnyc.com",
+      "builtinchicago.com",
+      "builtin.com",
+      "simplyhired.com",
+      "careerbuilder.com"
+    ],
+    "recruiting_prefixes": [
+      "careers",
+      "recruiting",
+      "talent",
+      "hr",
+      "noreply",
+      "no-reply",
+      "jobs",
+      "hire",
+      "people",
+      "staffing",
+      "recruitment",
+      "applications"
+    ]
+  }
+}
