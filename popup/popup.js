@@ -1,29 +1,67 @@
-import Storage from '../lib/storage.js';
-
 const $ = (id) => document.getElementById(id);
 
-// ── View management ────────────────────────────────────────────────────────
-const VIEWS = ['authSection', 'dashboard', 'settingsPanel'];
+// ── View management ──────────────────────────────────────────────────────────
 function showView(id) {
-  VIEWS.forEach((v) => $(`${v}`) && $(`${v}`).classList.toggle('hidden', v !== id));
+  ['authSection', 'dashboard', 'settingsPanel'].forEach(function(v) {
+    var el = $(v);
+    if (el) el.classList.toggle('hidden', v !== id);
+  });
 }
 
-// ── Theme ──────────────────────────────────────────────────────────────────
-let darkMode = localStorage.getItem('jes-dark') === '1';
+// ── Theme ────────────────────────────────────────────────────────────────────
+var darkMode = localStorage.getItem('jes-dark') === '1';
 function applyTheme() {
   document.body.classList.toggle('dark', darkMode);
 }
 applyTheme();
-$('themeBtn').addEventListener('click', () => {
+$('themeBtn').addEventListener('click', function() {
   darkMode = !darkMode;
   localStorage.setItem('jes-dark', darkMode ? '1' : '0');
   applyTheme();
 });
 
-// ── Auth check on open ─────────────────────────────────────────────────────
-async function init() {
-  chrome.runtime.sendMessage({ action: 'checkAuth' }, (res) => {
-    if (res?.authenticated) {
+// ── Storage helpers (no import needed) ───────────────────────────────────────
+function getSettings() {
+  return new Promise(function(resolve) {
+    chrome.storage.sync.get(['settings'], function(data) {
+      resolve(data.settings || {
+        autoLabel: true, autoArchivePromotions: false,
+        starAcceptances: true, scanInterval: 15,
+        notificationsEnabled: true, showBadges: true
+      });
+    });
+  });
+}
+
+function saveSettings(settings) {
+  return new Promise(function(resolve) {
+    chrome.storage.sync.set({ settings: settings }, resolve);
+  });
+}
+
+function getStats() {
+  return new Promise(function(resolve) {
+    chrome.storage.local.get(['stats'], function(data) {
+      resolve(data.stats || {
+        totalProcessed: 0, totalAccepted: 0, totalRejected: 0,
+        totalPromotions: 0, totalInterviews: 0, lastScan: null
+      });
+    });
+  });
+}
+
+function getActivityLog(limit) {
+  return new Promise(function(resolve) {
+    chrome.storage.local.get(['activityLog'], function(data) {
+      resolve((data.activityLog || []).slice(0, limit || 20));
+    });
+  });
+}
+
+// ── Init ─────────────────────────────────────────────────────────────────────
+function init() {
+  chrome.runtime.sendMessage({ action: 'checkAuth' }, function(res) {
+    if (res && res.authenticated) {
       loadDashboard();
     } else {
       showView('authSection');
@@ -31,141 +69,131 @@ async function init() {
   });
 }
 
-// ── Dashboard ──────────────────────────────────────────────────────────────
-async function loadDashboard() {
+// ── Dashboard ─────────────────────────────────────────────────────────────────
+function loadDashboard() {
   showView('dashboard');
-  const stats = await Storage.getStats();
+  getStats().then(function(stats) {
+    $('statAccepted').textContent   = stats.totalAccepted || 0;
+    $('statRejected').textContent   = stats.totalRejected || 0;
+    $('statInterviews').textContent = stats.totalInterviews || 0;
+    $('statPromotions').textContent = stats.totalPromotions || 0;
 
-  $('statAccepted').textContent   = stats.totalAccepted;
-  $('statRejected').textContent   = stats.totalRejected;
-  $('statInterviews').textContent = stats.totalInterviews;
-  $('statPromotions').textContent = stats.totalPromotions;
+    var total = (stats.totalAccepted || 0) + (stats.totalRejected || 0);
+    if (total > 0) {
+      var pct = Math.round((stats.totalAccepted / total) * 100);
+      $('acceptanceRate').textContent = pct + '%';
+      $('acceptanceBar').style.width  = pct + '%';
+    }
 
-  const total = stats.totalAccepted + stats.totalRejected;
-  if (total > 0) {
-    const pct = Math.round((stats.totalAccepted / total) * 100);
-    $('acceptanceRate').textContent = `${pct}%`;
-    $('acceptanceBar').style.width = `${pct}%`;
-  }
+    if (stats.lastScan) {
+      $('lastScanInfo').textContent = 'Last scan: ' + new Date(stats.lastScan).toLocaleString();
+    }
+  });
 
-  if (stats.lastScan) {
-    const d = new Date(stats.lastScan);
-    $('lastScanInfo').textContent = `Last scan: ${d.toLocaleString()}`;
-  }
-
-  await loadActivity();
+  loadActivity();
 }
 
-async function loadActivity() {
-  const log = await Storage.getActivityLog(15);
-  const list = $('activityList');
-
-  if (!log.length) {
-    list.innerHTML = '<div class="empty-msg">No activity yet — try scanning now.</div>';
-    return;
-  }
-
-  const icons = {
-    job_acceptance:    '✅',
-    job_rejection:     '❌',
-    interview_request: '📅',
-    application_sent:  '📤',
-    pending:           '⏳',
-    promotion:         '🗂'
-  };
-
-  list.innerHTML = log.map((item) => `
-    <div class="activity-item">
-      <span class="activity-icon">${icons[item.type] || '📧'}</span>
-      <div class="activity-body">
-        <div class="activity-subject">${escapeHtml(item.subject || '(no subject)')}</div>
-        <div class="activity-meta">${escapeHtml(item.from || '')} · ${timeAgo(item.timestamp)}</div>
-      </div>
-    </div>
-  `).join('');
+function loadActivity() {
+  getActivityLog(15).then(function(log) {
+    var list = $('activityList');
+    if (!log.length) {
+      list.innerHTML = '<div class="empty-msg">No activity yet — try scanning now.</div>';
+      return;
+    }
+    var icons = {
+      job_acceptance: '✅', job_rejection: '❌',
+      interview_request: '📅', application_sent: '📤',
+      pending: '⏳', promotion: '🗂'
+    };
+    list.innerHTML = log.map(function(item) {
+      return '<div class="activity-item">' +
+        '<span class="activity-icon">' + (icons[item.type] || '📧') + '</span>' +
+        '<div class="activity-body">' +
+          '<div class="activity-subject">' + escHtml(item.subject || '(no subject)') + '</div>' +
+          '<div class="activity-meta">' + escHtml(item.from || '') + ' · ' + timeAgo(item.timestamp) + '</div>' +
+        '</div></div>';
+    }).join('');
+  });
 }
 
-function escapeHtml(str) {
-  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+function escHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
 function timeAgo(ts) {
-  const diff = Date.now() - ts;
-  if (diff < 60_000)  return 'just now';
-  if (diff < 3600_000) return `${Math.floor(diff / 60_000)}m ago`;
-  if (diff < 86400_000) return `${Math.floor(diff / 3600_000)}h ago`;
-  return `${Math.floor(diff / 86400_000)}d ago`;
+  var diff = Date.now() - ts;
+  if (diff < 60000)    return 'just now';
+  if (diff < 3600000)  return Math.floor(diff / 60000) + 'm ago';
+  if (diff < 86400000) return Math.floor(diff / 3600000) + 'h ago';
+  return Math.floor(diff / 86400000) + 'd ago';
 }
 
-// ── Scan Now ──────────────────────────────────────────────────────────────
-$('scanNowBtn').addEventListener('click', () => {
-  const btn = $('scanNowBtn');
+// ── Scan Now ──────────────────────────────────────────────────────────────────
+$('scanNowBtn').addEventListener('click', function() {
+  var btn = $('scanNowBtn');
   btn.disabled = true;
   btn.textContent = '⏳ Scanning…';
-  chrome.runtime.sendMessage({ action: 'scanNow' }, async () => {
+  chrome.runtime.sendMessage({ action: 'scanNow' }, function() {
     btn.disabled = false;
     btn.textContent = '🔍 Scan Now';
-    await loadDashboard();
+    loadDashboard();
   });
 });
 
-$('openGmailBtn').addEventListener('click', () => {
+$('openGmailBtn').addEventListener('click', function() {
   chrome.tabs.create({ url: 'https://mail.google.com' });
 });
 
-// ── Sign In ────────────────────────────────────────────────────────────────
-$('signInBtn').addEventListener('click', () => {
-  $('signInBtn').disabled = true;
-  $('signInBtn').textContent = 'Signing in…';
-  chrome.runtime.sendMessage({ action: 'signIn' }, (res) => {
-    if (res?.token) {
+// ── Sign In ───────────────────────────────────────────────────────────────────
+$('signInBtn').addEventListener('click', function() {
+  var btn = $('signInBtn');
+  btn.disabled = true;
+  btn.textContent = 'Signing in…';
+  chrome.runtime.sendMessage({ action: 'signIn' }, function(res) {
+    if (res && res.token) {
       loadDashboard();
     } else {
-      $('signInBtn').disabled = false;
-      $('signInBtn').textContent = 'Sign in with Google';
-      alert('Sign-in failed: ' + (res?.error || 'Unknown error'));
+      btn.disabled = false;
+      btn.textContent = 'Sign in with Google';
+      alert('Sign-in failed: ' + ((res && res.error) || 'Unknown error'));
     }
   });
 });
 
-// ── Settings panel ────────────────────────────────────────────────────────
-$('settingsBtn').addEventListener('click', async () => {
-  await openSettings();
-});
-
-async function openSettings() {
-  const s = await Storage.getSettings();
-  $('sAutoLabel').checked     = !!s.autoLabel;
-  $('sStarAccept').checked    = !!s.starAcceptances;
-  $('sAutoArchive').checked   = !!s.autoArchivePromotions;
-  $('sNotifications').checked = !!s.notificationsEnabled;
-  $('sShowBadges').checked    = !!s.showBadges;
-  $('sScanInterval').value    = String(s.scanInterval || 15);
-  $('saveMsg').classList.add('hidden');
-  showView('settingsPanel');
-}
-
-$('backBtn').addEventListener('click', () => { showView('dashboard'); });
-
-$('saveSettingsBtn').addEventListener('click', async () => {
-  const settings = {
-    autoLabel:              $('sAutoLabel').checked,
-    starAcceptances:        $('sStarAccept').checked,
-    autoArchivePromotions:  $('sAutoArchive').checked,
-    notificationsEnabled:   $('sNotifications').checked,
-    showBadges:             $('sShowBadges').checked,
-    scanInterval:           parseInt($('sScanInterval').value, 10)
-  };
-
-  chrome.runtime.sendMessage({ action: 'updateSettings', settings }, () => {
-    $('saveMsg').classList.remove('hidden');
-    setTimeout(() => $('saveMsg').classList.add('hidden'), 2000);
+// ── Settings ──────────────────────────────────────────────────────────────────
+$('settingsBtn').addEventListener('click', function() {
+  getSettings().then(function(s) {
+    $('sAutoLabel').checked     = !!s.autoLabel;
+    $('sStarAccept').checked    = !!s.starAcceptances;
+    $('sAutoArchive').checked   = !!s.autoArchivePromotions;
+    $('sNotifications').checked = !!s.notificationsEnabled;
+    $('sShowBadges').checked    = !!s.showBadges;
+    $('sScanInterval').value    = String(s.scanInterval || 15);
+    $('saveMsg').classList.add('hidden');
+    showView('settingsPanel');
   });
 });
 
-$('signOutBtn').addEventListener('click', () => {
+$('backBtn').addEventListener('click', function() { showView('dashboard'); });
+
+$('saveSettingsBtn').addEventListener('click', function() {
+  var settings = {
+    autoLabel:             $('sAutoLabel').checked,
+    starAcceptances:       $('sStarAccept').checked,
+    autoArchivePromotions: $('sAutoArchive').checked,
+    notificationsEnabled:  $('sNotifications').checked,
+    showBadges:            $('sShowBadges').checked,
+    scanInterval:          parseInt($('sScanInterval').value, 10)
+  };
+  chrome.runtime.sendMessage({ action: 'updateSettings', settings: settings }, function() {
+    $('saveMsg').classList.remove('hidden');
+    setTimeout(function() { $('saveMsg').classList.add('hidden'); }, 2000);
+  });
+});
+
+$('signOutBtn').addEventListener('click', function() {
   if (!confirm('Sign out and stop monitoring emails?')) return;
-  chrome.runtime.sendMessage({ action: 'signOut' }, () => {
+  chrome.runtime.sendMessage({ action: 'signOut' }, function() {
     showView('authSection');
   });
 });
